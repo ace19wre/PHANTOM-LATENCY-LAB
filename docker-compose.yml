@@ -1,0 +1,73 @@
+services:
+  prod-app-01:
+    build: ./prod-app-01
+    container_name: Prod-App-01
+    ports:
+      - "22222:22"
+    cap_add:
+      - NET_ADMIN
+    networks:
+      user-subnet:
+        ipv4_address: 192.168.241.12
+
+  router-a:
+    image: ubuntu:22.04
+    container_name: Router-A
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      user-subnet:
+        ipv4_address: 192.168.241.10
+      transit-net:
+        ipv4_address: 192.168.242.5
+    command: tail -f /dev/null
+
+  router-b:
+    image: ubuntu:22.04
+    container_name: Router-B
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      transit-net:
+        ipv4_address: 192.168.242.10
+    command: tail -f /dev/null
+
+  backup-gw:
+    image: ubuntu:22.04
+    container_name: Backup-GW
+    cap_add:
+      - NET_ADMIN
+    sysctls:
+      - net.ipv4.ip_forward=1
+    networks:
+      user-subnet:
+        ipv4_address: 192.168.241.254
+      partner-subnet:
+        ipv4_address: 192.168.243.20
+    command: tail -f /dev/null
+
+  partner-net:
+    image: ubuntu:22.04
+    container_name: Partner-Net
+    networks:
+      partner-subnet:
+        ipv4_address: 192.168.243.55
+    command: tail -f /dev/null
+
+networks:
+  user-subnet:
+    ipam:
+      config:
+        - subnet: 192.168.241.0/24
+  transit-net:
+    ipam:
+      config:
+        - subnet: 192.168.242.0/24
+  partner-subnet:
+    ipam:
+      config:
+        - subnet: 192.168.243.0/24
